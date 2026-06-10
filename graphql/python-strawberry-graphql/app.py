@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 import strawberry
+from strawberry.schema.config import StrawberryConfig
 from fastapi import FastAPI
 from strawberry.fastapi import GraphQLRouter
 from sqlalchemy import create_engine, Column, String, Integer, Table, ForeignKey
@@ -168,7 +169,11 @@ class Mutation:
         return "seeded"
 
 
-schema = strawberry.Schema(query=Query, mutation=Mutation)
+schema = strawberry.Schema(
+    query=Query,
+    mutation=Mutation,
+    config=StrawberryConfig(auto_camel_case=False),
+)
 graphql_app = GraphQLRouter(schema)
 
 app = FastAPI()
