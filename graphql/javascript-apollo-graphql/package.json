@@ -1,0 +1,14 @@
+{
+  "name": "javascript-apollo-graphql",
+  "version": "1.0.0",
+  "main": "app.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.10.0",
+    "better-sqlite3": "^9.4.3",
+    "graphql": "^16.8.1"
+  }
+}
