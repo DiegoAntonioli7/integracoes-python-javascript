@@ -16,6 +16,6 @@ sleep 3
 echo "==> Executando Locust..."
 cd "$ROOT"
 mkdir -p "$ROOT/graphql/results"
-locust -f locust/graphql_javascript_locust.py --host http://localhost:3003 --csv="$ROOT/graphql/results/graphql_javascript"
+locust -f locust/graphql_javascript_locust.py --host http://localhost:3003 --users 100 --spawn-rate 20 --csv="$ROOT/graphql/results/graphql_javascript"
 
 kill $SERVER_PID 2>/dev/null

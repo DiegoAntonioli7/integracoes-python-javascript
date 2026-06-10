@@ -1,7 +1,13 @@
+import sys
+from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import xml.etree.ElementTree as ET
 from sqlalchemy import create_engine, Column, String, Integer as SAInteger, Table, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Session
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+from shared.seed_data import build_seed_data
 
 DATABASE_URL = "sqlite:///./soap_python.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
@@ -27,6 +33,11 @@ class UserRow(Base):
     id = Column(String, primary_key=True)
     name = Column(String)
     email = Column(String)
+    country = Column(String)
+    city = Column(String)
+    bio = Column(String)
+    phone = Column(String)
+    avatar_url = Column(String)
 
 
 class MusicRow(Base):
@@ -36,6 +47,11 @@ class MusicRow(Base):
     artist = Column(String)
     album = Column(String)
     duration = Column(SAInteger)
+    genre = Column(String)
+    label = Column(String)
+    composer = Column(String)
+    lyrics_snippet = Column(String)
+    cover_url = Column(String)
 
 
 class PlaylistRow(Base):
@@ -44,20 +60,13 @@ class PlaylistRow(Base):
     user_id = Column(String, ForeignKey("users.id"))
     name = Column(String)
     description = Column(String)
+    genre_tags = Column(String)
+    mood = Column(String)
+    cover_url = Column(String)
+    notes = Column(String)
 
 
 Base.metadata.create_all(engine)
-
-SEED_USERS = [{"id": "user-001", "name": "Test User", "email": "test@test.com"}]
-SEED_MUSICS = [
-    {"id": "music-001", "title": "Song 1", "artist": "Artist 1", "album": "Album 1", "duration": 200},
-    {"id": "music-002", "title": "Song 2", "artist": "Artist 2", "album": "Album 2", "duration": 210},
-    {"id": "music-003", "title": "Song 3", "artist": "Artist 3", "album": "Album 3", "duration": 220},
-]
-SEED_PLAYLISTS = [
-    {"id": "playlist-001", "user_id": "user-001", "name": "Test Playlist", "description": "Load test"}
-]
-SEED_PLAYLIST_MUSICS = [("playlist-001", "music-001"), ("playlist-001", "music-002"), ("playlist-001", "music-003")]
 
 
 def wrap_envelope(operation, inner_xml):
@@ -71,20 +80,48 @@ def wrap_envelope(operation, inner_xml):
     )
 
 
+def user_xml(r):
+    return (
+        f"<tns:item><tns:id>{r.id}</tns:id><tns:name>{r.name}</tns:name>"
+        f"<tns:email>{r.email}</tns:email><tns:country>{r.country}</tns:country>"
+        f"<tns:city>{r.city}</tns:city><tns:bio>{r.bio}</tns:bio>"
+        f"<tns:phone>{r.phone}</tns:phone><tns:avatar_url>{r.avatar_url}</tns:avatar_url></tns:item>"
+    )
+
+
+def music_xml(r):
+    return (
+        f"<tns:item><tns:id>{r.id}</tns:id><tns:title>{r.title}</tns:title>"
+        f"<tns:artist>{r.artist}</tns:artist><tns:album>{r.album}</tns:album>"
+        f"<tns:duration>{r.duration}</tns:duration><tns:genre>{r.genre}</tns:genre>"
+        f"<tns:label>{r.label}</tns:label><tns:composer>{r.composer}</tns:composer>"
+        f"<tns:lyrics_snippet>{r.lyrics_snippet}</tns:lyrics_snippet>"
+        f"<tns:cover_url>{r.cover_url}</tns:cover_url></tns:item>"
+    )
+
+
+def playlist_xml(r):
+    return (
+        f"<tns:item><tns:id>{r.id}</tns:id><tns:user_id>{r.user_id}</tns:user_id>"
+        f"<tns:name>{r.name}</tns:name><tns:description>{r.description}</tns:description>"
+        f"<tns:genre_tags>{r.genre_tags}</tns:genre_tags><tns:mood>{r.mood}</tns:mood>"
+        f"<tns:cover_url>{r.cover_url}</tns:cover_url><tns:notes>{r.notes}</tns:notes></tns:item>"
+    )
+
+
 def handle_seed():
+    data = build_seed_data()
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
     with Session(engine) as session:
-        session.execute(playlist_music.delete())
-        session.query(PlaylistRow).delete()
-        session.query(MusicRow).delete()
-        session.query(UserRow).delete()
-        for u in SEED_USERS:
+        for u in data["users"]:
             session.add(UserRow(**u))
-        for m in SEED_MUSICS:
+        for m in data["musics"]:
             session.add(MusicRow(**m))
-        for p in SEED_PLAYLISTS:
+        for p in data["playlists"]:
             session.add(PlaylistRow(**p))
         session.commit()
-        for pl_id, m_id in SEED_PLAYLIST_MUSICS:
+        for pl_id, m_id in data["playlist_musics"]:
             session.execute(playlist_music.insert().values(playlist_id=pl_id, music_id=m_id))
         session.commit()
     return wrap_envelope("Seed", "<tns:result>seeded</tns:result>")
@@ -92,34 +129,19 @@ def handle_seed():
 
 def handle_get_users():
     with Session(engine) as session:
-        rows = session.query(UserRow).all()
-        items = "".join(
-            f"<tns:item><tns:id>{r.id}</tns:id><tns:name>{r.name}</tns:name><tns:email>{r.email}</tns:email></tns:item>"
-            for r in rows
-        )
+        items = "".join(user_xml(r) for r in session.query(UserRow).all())
     return wrap_envelope("GetUsers", items)
 
 
 def handle_get_musics():
     with Session(engine) as session:
-        rows = session.query(MusicRow).all()
-        items = "".join(
-            f"<tns:item><tns:id>{r.id}</tns:id><tns:title>{r.title}</tns:title>"
-            f"<tns:artist>{r.artist}</tns:artist><tns:album>{r.album}</tns:album>"
-            f"<tns:duration>{r.duration}</tns:duration></tns:item>"
-            for r in rows
-        )
+        items = "".join(music_xml(r) for r in session.query(MusicRow).all())
     return wrap_envelope("GetMusics", items)
 
 
 def handle_get_playlists():
     with Session(engine) as session:
-        rows = session.query(PlaylistRow).all()
-        items = "".join(
-            f"<tns:item><tns:id>{r.id}</tns:id><tns:user_id>{r.user_id}</tns:user_id>"
-            f"<tns:name>{r.name}</tns:name><tns:description>{r.description}</tns:description></tns:item>"
-            for r in rows
-        )
+        items = "".join(playlist_xml(r) for r in session.query(PlaylistRow).all())
     return wrap_envelope("GetPlaylists", items)
 
 
@@ -136,7 +158,6 @@ class SOAPHandler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(length)
 
-        # Resolve operation from SOAPAction header first, then fall back to XML body
         soap_action = self.headers.get("SOAPAction", "").strip('"')
         operation = soap_action.split("#")[-1] if "#" in soap_action else None
 

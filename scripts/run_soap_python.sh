@@ -41,6 +41,6 @@ sleep 3
 echo "==> Executando Locust..."
 cd "$ROOT"
 mkdir -p "$ROOT/soap/results"
-"$PYTHON3" -m locust -f locust/soap_python_locust.py --host http://localhost:8001 --csv="$ROOT/soap/results/soap_python"
+"$PYTHON3" -m locust -f locust/soap_python_locust.py --host http://localhost:8001 --users 100 --spawn-rate 20 --csv="$ROOT/soap/results/soap_python"
 
 kill $SERVER_PID 2>/dev/null

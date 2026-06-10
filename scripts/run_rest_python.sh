@@ -42,6 +42,6 @@ sleep 3
 echo "==> Executando Locust..."
 cd "$ROOT"
 mkdir -p "$ROOT/rest/results"
-"$PYTHON3" -m locust -f locust/rest_python_locust.py --host http://localhost:8000 --csv="$ROOT/rest/results/rest_python"
+"$PYTHON3" -m locust -f locust/rest_python_locust.py --host http://localhost:8000 --users 100 --spawn-rate 20 --csv="$ROOT/rest/results/rest_python"
 
 kill $SERVER_PID 2>/dev/null
