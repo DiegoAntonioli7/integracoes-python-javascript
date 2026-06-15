@@ -33,7 +33,7 @@ cd "$ROOT/rest/python-fastapi-rest"
 "$PYTHON3" -m pip install -r requirements.txt -q
 
 echo "==> Subindo servidor REST Python na porta 8000..."
-"$PYTHON3" -m uvicorn app:app --port 8000 &
+"$PYTHON3" app.py &
 SERVER_PID=$!
 
 echo "==> Aguardando servidor iniciar..."

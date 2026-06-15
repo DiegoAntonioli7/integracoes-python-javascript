@@ -32,7 +32,7 @@ cd "$ROOT/graphql/python-strawberry-graphql"
 "$PYTHON3" -m pip install -r requirements.txt -q
 
 echo "==> Subindo servidor GraphQL Python na porta 8002..."
-"$PYTHON3" -m uvicorn app:app --port 8002 &
+"$PYTHON3" app.py &
 SERVER_PID=$!
 
 echo "==> Aguardando servidor iniciar..."
