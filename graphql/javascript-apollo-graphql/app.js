@@ -76,11 +76,17 @@ function runSeed() {
 
 runSeed();
 
+const stmts = {
+  users: db.prepare('SELECT * FROM users'),
+  musics: db.prepare('SELECT * FROM musics'),
+  playlists: db.prepare('SELECT * FROM playlists'),
+};
+
 const resolvers = {
   Query: {
-    users: () => db.prepare('SELECT * FROM users').all(),
-    musics: () => db.prepare('SELECT * FROM musics').all(),
-    playlists: () => db.prepare('SELECT * FROM playlists').all(),
+    users: () => stmts.users.all(),
+    musics: () => stmts.musics.all(),
+    playlists: () => stmts.playlists.all(),
   },
   Mutation: {
     seed: () => runSeed(),

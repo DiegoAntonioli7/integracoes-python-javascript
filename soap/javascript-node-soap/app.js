@@ -6,9 +6,7 @@ const db = new Database('./soap_javascript.db');
 const app = express();
 const NS = 'http://streaming.api.com/v1';
 
-app.use(express.text({ type: '*/xml' }));
-app.use(express.text({ type: 'text/xml' }));
-app.use(express.text({ type: 'application/soap+xml' }));
+app.use(express.text({ type: ['text/xml', 'application/soap+xml', '*/xml'] }));
 
 function recreateSchema() {
   db.exec(`
@@ -102,6 +100,14 @@ function runSeed() {
   data.playlistMusics.forEach(([pl, mu]) => insertPM.run(pl, mu));
 }
 
+runSeed();
+
+const stmts = {
+  users: db.prepare('SELECT * FROM users'),
+  musics: db.prepare('SELECT * FROM musics'),
+  playlists: db.prepare('SELECT * FROM playlists'),
+};
+
 app.post('/', (req, res) => {
   const action = req.headers['soapaction'] || req.headers['SOAPAction'] || '';
   const operation = detectOperation(req.body, action);
@@ -113,26 +119,21 @@ app.post('/', (req, res) => {
   }
 
   if (operation === 'GetUsers') {
-    const users = db.prepare('SELECT * FROM users').all();
-    const items = users.map(userXml).join('');
+    const items = stmts.users.all().map(userXml).join('');
     return res.send(soapResponse('GetUsers', items));
   }
 
   if (operation === 'GetMusics') {
-    const musics = db.prepare('SELECT * FROM musics').all();
-    const items = musics.map(musicXml).join('');
+    const items = stmts.musics.all().map(musicXml).join('');
     return res.send(soapResponse('GetMusics', items));
   }
 
   if (operation === 'GetPlaylists') {
-    const playlists = db.prepare('SELECT * FROM playlists').all();
-    const items = playlists.map(playlistXml).join('');
+    const items = stmts.playlists.all().map(playlistXml).join('');
     return res.send(soapResponse('GetPlaylists', items));
   }
 
   res.status(400).send(soapResponse('Fault', '<tns:faultstring>Unknown operation</tns:faultstring>'));
 });
-
-runSeed();
 
 app.listen(3002, () => console.log('SOAP JS running on port 3002'));

@@ -67,16 +67,22 @@ app.post('/seed', (req, res) => {
 
 runSeed();
 
+const stmts = {
+  users: db.prepare('SELECT * FROM users'),
+  musics: db.prepare('SELECT * FROM musics'),
+  playlists: db.prepare('SELECT * FROM playlists'),
+};
+
 app.get('/users', (req, res) => {
-  res.json(db.prepare('SELECT * FROM users').all());
+  res.type('json').send(JSON.stringify(stmts.users.all()));
 });
 
 app.get('/musics', (req, res) => {
-  res.json(db.prepare('SELECT * FROM musics').all());
+  res.type('json').send(JSON.stringify(stmts.musics.all()));
 });
 
 app.get('/playlists', (req, res) => {
-  res.json(db.prepare('SELECT * FROM playlists').all());
+  res.type('json').send(JSON.stringify(stmts.playlists.all()));
 });
 
 app.listen(3001, () => console.log('REST JS running on port 3001'));

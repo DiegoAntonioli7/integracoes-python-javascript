@@ -1,8 +1,10 @@
+import json
 import sqlite3
 import sys
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import Response
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -71,18 +73,21 @@ def seed():
 
 
 @app.get("/users")
-def get_users():
-    return [dict(r) for r in conn.execute("SELECT * FROM users").fetchall()]
+async def get_users():
+    rows = [dict(r) for r in conn.execute("SELECT * FROM users").fetchall()]
+    return Response(content=json.dumps(rows), media_type="application/json")
 
 
 @app.get("/musics")
-def get_musics():
-    return [dict(r) for r in conn.execute("SELECT * FROM musics").fetchall()]
+async def get_musics():
+    rows = [dict(r) for r in conn.execute("SELECT * FROM musics").fetchall()]
+    return Response(content=json.dumps(rows), media_type="application/json")
 
 
 @app.get("/playlists")
-def get_playlists():
-    return [dict(r) for r in conn.execute("SELECT * FROM playlists").fetchall()]
+async def get_playlists():
+    rows = [dict(r) for r in conn.execute("SELECT * FROM playlists").fetchall()]
+    return Response(content=json.dumps(rows), media_type="application/json")
 
 
 run_seed()

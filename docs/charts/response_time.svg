@@ -8,27 +8,26 @@
 <text x="222.0" y="30.0" font-family="system-ui,sans-serif" font-size="12" font-weight="normal" fill="#1f2937" text-anchor="start">JavaScript</text>
 <line x1="72" y1="392" x2="896" y2="392" stroke="#9ca3af" stroke-width="1"/>
 <line x1="72" y1="56.0" x2="896" y2="56.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="64.0" y="60.0" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">500.0</text>
+<text x="64.0" y="60.0" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">300.0</text>
 <line x1="72" y1="123.2" x2="896" y2="123.2" stroke="#e5e7eb" stroke-width="1"/>
-<text x="64.0" y="127.2" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">400.0</text>
+<text x="64.0" y="127.2" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">240.0</text>
 <line x1="72" y1="190.4" x2="896" y2="190.4" stroke="#e5e7eb" stroke-width="1"/>
-<text x="64.0" y="194.4" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">300.0</text>
+<text x="64.0" y="194.4" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">180.0</text>
 <line x1="72" y1="257.6" x2="896" y2="257.6" stroke="#e5e7eb" stroke-width="1"/>
-<text x="64.0" y="261.6" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">200.0</text>
+<text x="64.0" y="261.6" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">120.0</text>
 <line x1="72" y1="324.8" x2="896" y2="324.8" stroke="#e5e7eb" stroke-width="1"/>
-<text x="64.0" y="328.8" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">100.0</text>
+<text x="64.0" y="328.8" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">60.0</text>
 <line x1="72" y1="392.0" x2="896" y2="392.0" stroke="#e5e7eb" stroke-width="1"/>
 <text x="64.0" y="396.0" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">0.0</text>
-<rect x="121.4" y="141.3" width="76.9" height="250.7" fill="#2563eb" rx="3"/>
-<text x="159.9" y="155.3" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#fff" text-anchor="middle">373.0</text>
-<rect x="220.3" y="390.0" width="76.9" height="2.0" fill="#f59e0b" rx="3"/>
+<rect x="121.4" y="388.0" width="76.9" height="4.0" fill="#2563eb" rx="3"/>
+<rect x="220.3" y="388.5" width="76.9" height="3.5" fill="#f59e0b" rx="3"/>
 <text x="209.3" y="420.0" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#1f2937" text-anchor="middle">REST</text>
-<rect x="396.1" y="245.3" width="76.9" height="146.7" fill="#2563eb" rx="3"/>
-<text x="434.6" y="259.3" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#fff" text-anchor="middle">218.3</text>
-<rect x="495.0" y="389.8" width="76.9" height="2.2" fill="#f59e0b" rx="3"/>
+<rect x="396.1" y="189.1" width="76.9" height="202.9" fill="#2563eb" rx="3"/>
+<text x="434.6" y="203.1" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#fff" text-anchor="middle">181.2</text>
+<rect x="495.0" y="388.7" width="76.9" height="3.3" fill="#f59e0b" rx="3"/>
 <text x="484.0" y="420.0" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#1f2937" text-anchor="middle">SOAP</text>
-<rect x="670.8" y="341.6" width="76.9" height="50.4" fill="#2563eb" rx="3"/>
-<text x="709.2" y="355.6" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#fff" text-anchor="middle">75.0</text>
-<rect x="769.7" y="386.3" width="76.9" height="5.7" fill="#f59e0b" rx="3"/>
+<rect x="670.8" y="333.7" width="76.9" height="58.3" fill="#2563eb" rx="3"/>
+<text x="709.2" y="347.7" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#fff" text-anchor="middle">52.1</text>
+<rect x="769.7" y="383.0" width="76.9" height="9.0" fill="#f59e0b" rx="3"/>
 <text x="758.7" y="420.0" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#1f2937" text-anchor="middle">GraphQL</text>
 </svg>
