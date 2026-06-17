@@ -27,8 +27,6 @@ function recreateSchema() {
   `);
 }
 
-recreateSchema();
-
 const typeDefs = `
   type User {
     id: ID!, name: String!, email: String!, country: String!, city: String!,
@@ -75,6 +73,8 @@ function runSeed() {
   data.playlistMusics.forEach(([pl, mu]) => insertPM.run(pl, mu));
   return 'seeded';
 }
+
+runSeed();
 
 const resolvers = {
   Query: {
