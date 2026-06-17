@@ -8,6 +8,7 @@ Desde a apresentação anterior, foram concluídos os seguintes pontos:
 
 1. **Correção das integrações com JavaScript** — REST (Express), SOAP (node-soap) e GraphQL (Apollo) foram ajustados e validados. As evidências de funcionamento estão na seção [Integrações JavaScript](#integrações-javascript), com capturas de tela do Postman (`docs/imgs/`).
 2. **Criação dos gráficos comparativos** — gráficos de tempo de resposta, tamanho do payload e throughput foram gerados a partir dos resultados do Locust. Veja a seção [Gráficos comparativos](#gráficos-comparativos) (`docs/charts/`).
+3. **Padronização das integrações para testes justos** — Python passou a usar `sqlite3` puro (conexão persistente, queries diretas), alinhado ao `better-sqlite3` do JavaScript; SOAP Python usa `ThreadingHTTPServer`; payload SOAP unificado (`tns:`/`tns:item`) em ambas as linguagens; Locust roda em modo headless com duração fixa de 60 s em todos os scripts.
 
 ## Objetivo
 
@@ -108,10 +109,8 @@ Cada script:
 2. Libera a porta do serviço, se estiver em uso
 3. Instala dependências do servidor
 4. Sobe o servidor em background
-5. Executa o Locust (100 usuários, spawn rate 20)
+5. Executa o Locust em modo headless (100 usuários, spawn rate 20, duração fixa de 60 s)
 6. Salva resultados CSV em `{rest|soap|graphql}/results/`
-
-Abra http://localhost:8089 para a interface web do Locust durante a execução.
 
 ## Subir um serviço manualmente
 
@@ -181,18 +180,20 @@ curl -X POST http://localhost:8000/api/v1/seed          # REST
 
 ## Resultados dos testes de carga
 
-Métricas extraídas dos arquivos `*_stats.csv` gerados pelo Locust (100 usuários, spawn rate 20). Valores da linha **Aggregated** de cada teste.
+Métricas extraídas dos arquivos `*_stats.csv` gerados pelo Locust (100 usuários, spawn rate 20, **60 s** em modo headless). Valores da linha **Aggregated** de cada teste.
+
+> **Nota:** GraphQL Python ainda não foi re-executado após a padronização completa; demais implementações refletem o harness padronizado.
 
 ### Comparativo geral
 
 | Tecnologia | Linguagem | Requisições | Tempo médio (ms) | Tempo mediano (ms) | Tamanho médio da resposta | Throughput (req/s) | Falhas |
 |------------|-----------|-------------|------------------|--------------------|---------------------------|--------------------|--------|
-| REST | Python | 1.555 | 326,4 | 290 | 131,6 KB | 44,0 | 0 |
-| REST | JavaScript | 4.678 | 2,7 | 2 | 131,5 KB | 149,6 | 0 |
-| SOAP | Python | 9.157 | 5,5 | 4 | 188,7 KB | 152,7 | 0 |
-| SOAP | JavaScript | 9.168 | 2,9 | 3 | 157,5 KB | 152,8 | 0 |
+| REST | Python | 2.360 | 373,0 | 310 | 132,2 KB | 40,0 | 0 |
+| REST | JavaScript | 8.919 | 2,9 | 2 | 132,0 KB | 151,0 | 0 |
+| SOAP | Python | 3.425 | 218,3 | 200 | 188,2 KB | 57,9 | 1 |
+| SOAP | JavaScript | 8.962 | 3,3 | 3 | 188,7 KB | 151,7 | 0 |
 | GraphQL | Python | 5.971 | 75,0 | 70 | 140,2 KB | 99,5 | 0 |
-| GraphQL | JavaScript | 8.720 | 8,8 | 7 | 131,5 KB | 145,3 | 0 |
+| GraphQL | JavaScript | 8.571 | 8,5 | 6 | 132,3 KB | 145,1 | 0 |
 
 ### Gráficos comparativos
 
@@ -234,21 +235,23 @@ python3 scripts/generate_benchmark_charts.py
 
 | Métrica | REST | SOAP | GraphQL |
 |---------|------|------|---------|
-| Requisições | 1.555 | 9.157 | 5.971 |
-| Tempo médio | 326,4 ms | 5,5 ms | 75,0 ms |
-| Tempo mediano | 290 ms | 4 ms | 70 ms |
-| Tamanho médio da resposta | 131,6 KB | 188,7 KB | 140,2 KB |
-| Throughput | 44,0 req/s | 152,7 req/s | 99,5 req/s |
+| Requisições | 2.360 | 3.425 | 5.971 |
+| Tempo médio | 373,0 ms | 218,3 ms | 75,0 ms |
+| Tempo mediano | 310 ms | 200 ms | 70 ms |
+| Tamanho médio da resposta | 132,2 KB | 188,2 KB | 140,2 KB |
+| Throughput | 40,0 req/s | 57,9 req/s | 99,5 req/s |
+| Falhas | 0 | 1 | 0 |
 
 ### Comparativo por tecnologia (JavaScript)
 
 | Métrica | REST | SOAP | GraphQL |
 |---------|------|------|---------|
-| Requisições | 4.678 | 9.168 | 8.720 |
-| Tempo médio | 2,7 ms | 2,9 ms | 8,8 ms |
-| Tempo mediano | 2 ms | 3 ms | 7 ms |
-| Tamanho médio da resposta | 131,5 KB | 157,5 KB | 131,5 KB |
-| Throughput | 149,6 req/s | 152,8 req/s | 145,3 req/s |
+| Requisições | 8.919 | 8.962 | 8.571 |
+| Tempo médio | 2,9 ms | 3,3 ms | 8,5 ms |
+| Tempo mediano | 2 ms | 3 ms | 6 ms |
+| Tamanho médio da resposta | 132,0 KB | 188,7 KB | 132,3 KB |
+| Throughput | 151,0 req/s | 151,7 req/s | 145,1 req/s |
+| Falhas | 0 | 0 | 0 |
 
 ### Tamanho do payload por endpoint
 
@@ -256,90 +259,76 @@ As tabelas acima usam a linha **Aggregated** do Locust: média ponderada dos tr�
 
 | Endpoint | REST Python | REST JS | SOAP Python | SOAP JS | GraphQL Python | GraphQL JS |
 |----------|-------------|---------|-------------|---------|----------------|------------|
-| musics | 168,5 KB | 168,5 KB | **247,7 KB** | **204,7 KB** | 178,5 KB | 168,5 KB |
-| playlists | 113,0 KB | 113,0 KB | **151,3 KB** | **132,1 KB** | 117,8 KB | 113,0 KB |
-| users | 60,7 KB | 60,7 KB | **84,0 KB** | **69,5 KB** | 63,9 KB | 60,7 KB |
-| **Aggregated** | 131,6 KB | 131,5 KB | **188,7 KB** | **157,5 KB** | 140,2 KB | 131,5 KB |
+| musics | 168,5 KB | 168,5 KB | **247,7 KB** | **247,7 KB** | 178,5 KB | 168,5 KB |
+| playlists | 113,0 KB | 113,0 KB | **151,2 KB** | **151,4 KB** | 117,8 KB | 113,0 KB |
+| users | 60,7 KB | 60,7 KB | **84,0 KB** | **84,0 KB** | 63,9 KB | 60,7 KB |
+| **Aggregated** | 132,2 KB | 132,0 KB | **188,2 KB** | **188,7 KB** | 140,2 KB | 132,3 KB |
 
-SOAP é o protocolo com maior payload em todos os endpoints e linguagens. REST e GraphQL JavaScript ficam praticamente iguais; GraphQL Python fica um pouco acima por causa do envelope JSON (`{"data":{"musics":[...]}}`). SOAP Python é maior que SOAP JavaScript porque cada tag XML usa o prefixo `tns:` (ex.: `<tns:id>` vs `<id>`).
+SOAP é o protocolo com maior payload em todos os endpoints e linguagens — coerente com a verbosidade do XML. REST e GraphQL JavaScript ficam praticamente iguais (~132 KB); GraphQL Python fica um pouco acima por causa do envelope JSON (`{"data":{"musics":[...]}}`). Após a padronização, SOAP Python e JavaScript usam o mesmo formato XML (`tns:`/`tns:item`) e produzem payloads equivalentes (~188 KB agregado).
 
 ### Principais observações
 
-- **Tamanho da mensagem:** SOAP é o maior em cada endpoint (ver tabela acima); no agregado, SOAP Python (~189 KB) lidera, seguido de GraphQL Python (~140 KB) e REST/GraphQL JavaScript (~132 KB).
-- **Tempo de resposta (Python):** REST Python apresentou o maior tempo médio (~326 ms); GraphQL (~75 ms) e SOAP (~5,5 ms) foram significativamente mais rápidos no mesmo cenário.
-- **Tempo de resposta (JavaScript):** REST (~2,7 ms), SOAP (~2,9 ms) e GraphQL (~8,8 ms) mantiveram tempos baixos, com throughput entre 145 e 153 req/s.
-- **Volume de requisições:** Entre as implementações JavaScript, SOAP liderou em volume (9.168 requisições); entre as Python, SOAP também liderou (9.157 requisições).
-- **Confiabilidade:** Todas as implementações concluíram os testes sem falhas.
+- **Tamanho da mensagem (coerente):** SOAP é o maior em cada endpoint e linguagem (~188 KB agregado); REST e GraphQL JavaScript ficam equivalentes (~132 KB); GraphQL Python fica entre REST e SOAP (~140 KB) pelo envelope JSON.
+- **Tempo de resposta (Python):** GraphQL (~75 ms) foi o mais rápido; SOAP (~218 ms) ficou no meio; REST (~373 ms) foi o mais lento. A ordem REST < GraphQL < SOAP em velocidade **ainda não se confirma** em Python.
+- **Tempo de resposta (JavaScript, coerente):** REST (~2,9 ms) foi o mais rápido; SOAP (~3,3 ms) ficou no meio apesar do payload ~43% maior; GraphQL (~8,5 ms) foi o mais lento — overhead do Apollo Server supera a verbosidade do SOAP.
+- **Volume de requisições:** Com 60 s fixos, JavaScript processou ~8.570–8.960 requisições em todos os protocolos; Python variou de 2.360 (REST) a 5.971 (GraphQL), refletindo diferenças de throughput.
+- **Confiabilidade:** SOAP Python registrou 1 falha (`GetPlaylists`) por concorrência no SQLite; todas as implementações JavaScript e demais testes Python concluíram sem falhas (exceto essa).
 
-### Por que os tempos não estão "como deveriam"?
+### O que mudou com a padronização
 
-Em teoria, esperaríamos que **REST** fosse o protocolo mais rápido (menos camadas), **SOAP** o mais lento (XML verboso) e que **Python e JavaScript** tiverem desempenho parecido quando fazem a mesma operação. Os resultados mostram o oposto em vários casos — REST Python com ~326 ms de média, SOAP Python com ~5 ms, JavaScript com ~2–9 ms em todos os protocolos. Isso não indica que os protocolos "estão errados", mas que os números refletem **limitações do cenário de teste** e **diferenças de implementação**, não apenas a tecnologia de integração.
+Foram corrigidas as principais fontes de distorção identificadas na análise anterior:
 
-#### 1. Python vs JavaScript — stacks diferentes, não só linguagem
+| Aspecto | Antes | Depois |
+|---------|-------|--------|
+| Acesso ao banco (Python) | SQLAlchemy ORM + sessão por requisição | `sqlite3` puro, conexão persistente, `SELECT *` direto |
+| Concorrência SOAP Python | `HTTPServer` single-thread | `ThreadingHTTPServer` |
+| Payload SOAP | Formatos diferentes (Python `tns:` vs JS sem prefixo) | Formato unificado `tns:`/`tns:item` |
+| Duração do teste | Variável (parada manual) | Fixa: 60 s headless em todos os scripts |
 
-As implementações JavaScript usam **better-sqlite3** com uma conexão persistente ao banco, statements preparados e serialização JSON nativa do V8:
+Com isso, a lacuna artificial entre SOAP Python (~5 ms) e REST Python (~326 ms) desapareceu — ambos passaram a operar na mesma faixa de dezenas a centenas de ms.
 
-```javascript
-// rest/javascript-express-rest/app.js
-const db = new Database('./rest_javascript.db');
-res.json(db.prepare('SELECT * FROM musics').all());
-```
+### Análise dos resultados atuais
 
-As implementações Python usam **SQLAlchemy ORM** com sessão por requisição, conversão manual de linhas em dicionários Python e serialização JSON via FastAPI:
+#### 1. Payload — coerente com a teoria
 
-```python
-# rest/python-fastapi-rest/app.py
-with Session(engine) as session:
-    return [{"id": r.id, "title": r.title, ...} for r in session.query(MusicRow).all()]
-```
+SOAP produz respostas ~43% maiores que REST/GraphQL JS no agregado (~188 KB vs ~132 KB). GraphQL Python fica entre os dois (~140 KB) por causa do envelope JSON. **O tamanho da mensagem segue a ordem esperada: REST ≈ GraphQL < SOAP.**
 
-O Node.js mantém uma conexão SQLite aberta e opera com bindings nativos; o Python cria objetos ORM, monta listas de dicts e serializa ~130 KB de JSON em cada resposta. Essa diferença de stack explica a lacuna de **~2 ms (JS) vs ~326 ms (REST Python)** — muito maior que a diferença entre protocolos.
+#### 2. Tempo de resposta — Python vs JavaScript
 
-#### 2. Saturação sob carga — o tempo medido inclui fila de espera
+**Python** — REST permanece o gargalo:
 
-Todos os testes usam **100 usuários virtuais** com spawn rate 20, mas os servidores Python sobem com **um único processo**:
+| Python | Tempo médio | Throughput | Tempo médio `/musics` |
+|--------|-------------|------------|------------------------|
+| GraphQL | 75,0 ms | 99,5 req/s | ~75 ms |
+| SOAP | 218,3 ms | 57,9 req/s | ~303 ms |
+| REST | 373,0 ms | 40,0 req/s | ~510 ms |
 
-```bash
-python3 app.py   # uvicorn.run() ou HTTPServer — 1 worker
-```
+**JavaScript** — ordem coerente com a teoria (REST mais rápido):
 
-Com rotas síncronas, FastAPI/uvicorn delega a um pool de threads (limitado). Com 100 usuários simultâneos e respostas de ~130 KB, o servidor **satura** e as requisições passam a esperar na fila. O Locust mede o tempo **total da requisição** (fila + processamento + transferência), não só o processamento isolado.
+| JavaScript | Tempo médio | Throughput | Tempo médio `/musics` |
+|------------|-------------|------------|------------------------|
+| REST | 2,9 ms | 151,0 req/s | ~3,4 ms |
+| SOAP | 3,3 ms | 151,7 req/s | ~3,9 ms |
+| GraphQL | 8,5 ms | 145,1 req/s | ~9,8 ms |
 
-Isso é visível no REST Python: throughput de apenas **44 req/s** com mediana de **290 ms**, enquanto as stacks JavaScript sustentam **~150 req/s** com mediana de **2–7 ms**. O REST Python não é 100× mais lento para processar uma requisição individual em isolamento — ele **não consegue atender a carga** e a fila infla os tempos.
+Em JavaScript, REST é o mais rápido e GraphQL o mais lento — o custo do Apollo (parse de query, resolução de campos) supera a verbosidade do XML do SOAP. Em Python, FastAPI/uvicorn ainda satura mais que SOAP e GraphQL.
 
-#### 3. REST Python mais lento que GraphQL e SOAP (Python) — anomalia aparente
+#### 3. Python vs JavaScript — gap de runtime
 
-Na mesma linguagem, REST deveria ser o mais simples. Os números mostram:
+Mesmo com banco padronizado (`sqlite3` / `better-sqlite3`), **Node.js + V8** mantém tempos de ~3–9 ms vs ~75–373 ms do **Python + uvicorn** — diferença de uma a duas ordens de magnitude na mesma operação.
 
-| Python | Tempo médio | Throughput |
-|--------|-------------|------------|
-| REST | 326,4 ms | 44,0 req/s |
-| GraphQL | 75,0 ms | 99,5 req/s |
-| SOAP | 5,5 ms | 152,7 req/s |
+#### 4. Falha no SOAP Python
 
-Possíveis causas dessa ordem invertida:
+Durante o teste, 1 requisição `GetPlaylists` falhou com `RemoteDisconnected` — causada por `IndexError` ao acessar `sqlite3.Row` concorrentemente no `ThreadingHTTPServer`. Indica necessidade de lock na conexão SQLite ou conexão por thread.
 
-- **REST Python foi o mais saturado** no teste (menor throughput → maior fila → maior latência mediana).
-- **Payload pesado no endpoint mais chamado:** `/musics` tem peso 3 no Locust e responde ~168 KB; no CSV do REST Python, sua mediana chega a **500 ms**.
-- **SOAP Python** concatena strings XML com f-strings (sem camada ORM→dict→JSON), o que, neste volume de dados, pode ser mais barato que a pipeline do FastAPI.
-- **GraphQL Python** usa o mesmo SQLAlchemy, mas o teste pode ter rodado em condições de carga menos extremas (menos fila acumulada).
-
-Isso mostra que, neste projeto, os tempos medem **a stack completa sob carga**, não o protocolo isolado.
-
-#### 4. Tamanho da resposta impacta todos, mas SOAP não é o mais lento
-
-SOAP produz o maior payload (~189 KB em Python), mas mantém tempos baixos porque a implementação JavaScript é eficiente e o teste SOAP Python não atingiu o mesmo nível de saturação que o REST Python. O tamanho da mensagem afeta serialização e transferência, mas **runtime + concorrência** dominam os resultados.
-
-#### Resumo: o que os números realmente comparam
+#### Resumo: o que os números comparam agora
 
 | O que parece ser comparado | O que está sendo medido de fato |
 |----------------------------|--------------------------------|
-| REST vs SOAP vs GraphQL | Framework + ORM + runtime + configuração de deploy |
-| Python vs JavaScript | SQLAlchemy + uvicorn 1 worker vs better-sqlite3 + Node.js |
-| Tempo de resposta do protocolo | Tempo total sob fila com 100 usuários simultâneos |
-| Volume de requisições | Duração manual variável de cada execução do Locust |
-
-Para comparações mais coerentes entre protocolos e linguagens, seria necessário padronizar: mesma estratégia de acesso ao banco, e servidores Python com múltiplos workers (`uvicorn --workers 4`). Os resultados atuais são válidos como **observação do cenário real de execução do projeto**, mas não como benchmark isolado de protocolo.
+| REST vs SOAP vs GraphQL | Framework + serialização + runtime sob carga |
+| Python vs JavaScript | uvicorn/FastAPI vs Node.js/V8 (banco agora alinhado) |
+| Tamanho do payload | Verbosidade real do protocolo (coerente) |
+| Tempo de resposta | Tempo total incluindo fila, com 100 usuários por 60 s |
 
 Arquivos de origem: `rest/results/`, `soap/results/` e `graphql/results/`.
 

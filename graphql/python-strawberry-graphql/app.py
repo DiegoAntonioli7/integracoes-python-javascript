@@ -1,73 +1,40 @@
+import sqlite3
 import sys
 from pathlib import Path
+from typing import List
 
 import strawberry
-from strawberry.schema.config import StrawberryConfig
 from fastapi import FastAPI
 from strawberry.fastapi import GraphQLRouter
-from sqlalchemy import create_engine, Column, String, Integer, Table, ForeignKey
-from sqlalchemy.orm import DeclarativeBase, Session
-from typing import List
+from strawberry.schema.config import StrawberryConfig
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from shared.seed_data import build_seed_data
 
-DATABASE_URL = "sqlite:///./graphql_python.db"
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+DB_PATH = Path(__file__).parent / "graphql_python.db"
+conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+conn.row_factory = sqlite3.Row
 
-
-class Base(DeclarativeBase):
-    pass
-
-
-playlist_music = Table(
-    "playlist_music",
-    Base.metadata,
-    Column("playlist_id", String, ForeignKey("playlists.id")),
-    Column("music_id", String, ForeignKey("musics.id")),
-)
-
-
-class UserRow(Base):
-    __tablename__ = "users"
-    id = Column(String, primary_key=True)
-    name = Column(String)
-    email = Column(String)
-    country = Column(String)
-    city = Column(String)
-    bio = Column(String)
-    phone = Column(String)
-    avatar_url = Column(String)
-
-
-class MusicRow(Base):
-    __tablename__ = "musics"
-    id = Column(String, primary_key=True)
-    title = Column(String)
-    artist = Column(String)
-    album = Column(String)
-    duration = Column(Integer)
-    genre = Column(String)
-    label = Column(String)
-    composer = Column(String)
-    lyrics_snippet = Column(String)
-    cover_url = Column(String)
-
-
-class PlaylistRow(Base):
-    __tablename__ = "playlists"
-    id = Column(String, primary_key=True)
-    user_id = Column(String, ForeignKey("users.id"))
-    name = Column(String)
-    description = Column(String)
-    genre_tags = Column(String)
-    mood = Column(String)
-    cover_url = Column(String)
-    notes = Column(String)
-
-
-Base.metadata.create_all(engine)
+SCHEMA = """
+DROP TABLE IF EXISTS playlist_music;
+DROP TABLE IF EXISTS playlists;
+DROP TABLE IF EXISTS musics;
+DROP TABLE IF EXISTS users;
+CREATE TABLE users (
+  id TEXT PRIMARY KEY, name TEXT, email TEXT, country TEXT, city TEXT,
+  bio TEXT, phone TEXT, avatar_url TEXT
+);
+CREATE TABLE musics (
+  id TEXT PRIMARY KEY, title TEXT, artist TEXT, album TEXT, duration INTEGER,
+  genre TEXT, label TEXT, composer TEXT, lyrics_snippet TEXT, cover_url TEXT
+);
+CREATE TABLE playlists (
+  id TEXT PRIMARY KEY, user_id TEXT, name TEXT, description TEXT,
+  genre_tags TEXT, mood TEXT, cover_url TEXT, notes TEXT
+);
+CREATE TABLE playlist_music (playlist_id TEXT, music_id TEXT);
+"""
 
 
 @strawberry.type
@@ -110,63 +77,73 @@ class Playlist:
 
 def to_user(r):
     return User(
-        id=r.id, name=r.name, email=r.email, country=r.country, city=r.city,
-        bio=r.bio, phone=r.phone, avatar_url=r.avatar_url,
+        id=r["id"], name=r["name"], email=r["email"], country=r["country"], city=r["city"],
+        bio=r["bio"], phone=r["phone"], avatar_url=r["avatar_url"],
     )
 
 
 def to_music(r):
     return Music(
-        id=r.id, title=r.title, artist=r.artist, album=r.album, duration=r.duration,
-        genre=r.genre, label=r.label, composer=r.composer,
-        lyrics_snippet=r.lyrics_snippet, cover_url=r.cover_url,
+        id=r["id"], title=r["title"], artist=r["artist"], album=r["album"], duration=r["duration"],
+        genre=r["genre"], label=r["label"], composer=r["composer"],
+        lyrics_snippet=r["lyrics_snippet"], cover_url=r["cover_url"],
     )
 
 
 def to_playlist(r):
     return Playlist(
-        id=r.id, user_id=r.user_id, name=r.name, description=r.description,
-        genre_tags=r.genre_tags, mood=r.mood, cover_url=r.cover_url, notes=r.notes,
+        id=r["id"], user_id=r["user_id"], name=r["name"], description=r["description"],
+        genre_tags=r["genre_tags"], mood=r["mood"], cover_url=r["cover_url"], notes=r["notes"],
     )
+
+
+def run_seed():
+    data = build_seed_data()
+    conn.executescript(SCHEMA)
+    conn.executemany(
+        "INSERT INTO users (id, name, email, country, city, bio, phone, avatar_url) "
+        "VALUES (:id, :name, :email, :country, :city, :bio, :phone, :avatar_url)",
+        data["users"],
+    )
+    conn.executemany(
+        "INSERT INTO musics (id, title, artist, album, duration, genre, label, composer, "
+        "lyrics_snippet, cover_url) VALUES (:id, :title, :artist, :album, :duration, :genre, "
+        ":label, :composer, :lyrics_snippet, :cover_url)",
+        data["musics"],
+    )
+    conn.executemany(
+        "INSERT INTO playlists (id, user_id, name, description, genre_tags, mood, cover_url, notes) "
+        "VALUES (:id, :user_id, :name, :description, :genre_tags, :mood, :cover_url, :notes)",
+        data["playlists"],
+    )
+    conn.executemany(
+        "INSERT INTO playlist_music VALUES (?, ?)",
+        data["playlist_musics"],
+    )
+    conn.commit()
+    return "seeded"
 
 
 @strawberry.type
 class Query:
     @strawberry.field
     def users(self) -> List[User]:
-        with Session(engine) as session:
-            return [to_user(r) for r in session.query(UserRow).all()]
+        return [to_user(r) for r in conn.execute("SELECT * FROM users").fetchall()]
 
     @strawberry.field
     def musics(self) -> List[Music]:
-        with Session(engine) as session:
-            return [to_music(r) for r in session.query(MusicRow).all()]
+        return [to_music(r) for r in conn.execute("SELECT * FROM musics").fetchall()]
 
     @strawberry.field
     def playlists(self) -> List[Playlist]:
-        with Session(engine) as session:
-            return [to_playlist(r) for r in session.query(PlaylistRow).all()]
+        return [to_playlist(r) for r in conn.execute("SELECT * FROM playlists").fetchall()]
 
 
 @strawberry.type
 class Mutation:
     @strawberry.mutation
     def seed(self) -> str:
-        data = build_seed_data()
-        Base.metadata.drop_all(engine)
-        Base.metadata.create_all(engine)
-        with Session(engine) as session:
-            for u in data["users"]:
-                session.add(UserRow(**u))
-            for m in data["musics"]:
-                session.add(MusicRow(**m))
-            for p in data["playlists"]:
-                session.add(PlaylistRow(**p))
-            session.commit()
-            for pl_id, m_id in data["playlist_musics"]:
-                session.execute(playlist_music.insert().values(playlist_id=pl_id, music_id=m_id))
-            session.commit()
-        return "seeded"
+        return run_seed()
 
 
 schema = strawberry.Schema(
@@ -179,6 +156,7 @@ graphql_app = GraphQLRouter(schema)
 app = FastAPI()
 app.include_router(graphql_app, prefix="/graphql")
 
+run_seed()
 
 if __name__ == "__main__":
     import uvicorn

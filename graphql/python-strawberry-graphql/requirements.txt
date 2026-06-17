@@ -1,3 +1,2 @@
 strawberry-graphql[fastapi]
 uvicorn
-sqlalchemy

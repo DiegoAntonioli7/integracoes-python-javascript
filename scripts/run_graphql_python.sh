@@ -41,6 +41,6 @@ sleep 3
 echo "==> Executando Locust..."
 cd "$ROOT"
 mkdir -p "$ROOT/graphql/results"
-"$PYTHON3" -m locust -f locust/graphql_python_locust.py --host http://localhost:8002 --users 100 --spawn-rate 20 --csv="$ROOT/graphql/results/graphql_python"
+"$PYTHON3" -m locust -f locust/graphql_python_locust.py --host http://localhost:8002 --users 20 --spawn-rate 20 --headless --run-time 60s --stop-timeout 5 --csv="$ROOT/graphql/results/graphql_python"
 
 kill $SERVER_PID 2>/dev/null

@@ -4,6 +4,8 @@ const { buildSeedData } = require('../../shared/seed_data');
 
 const db = new Database('./soap_javascript.db');
 const app = express();
+const NS = 'http://streaming.api.com/v1';
+
 app.use(express.text({ type: '*/xml' }));
 app.use(express.text({ type: 'text/xml' }));
 app.use(express.text({ type: 'application/soap+xml' }));
@@ -30,11 +32,42 @@ function recreateSchema() {
   `);
 }
 
-function soapResponse(bodyContent) {
+function soapResponse(operation, innerContent) {
   return `<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-  <soapenv:Body>${bodyContent}</soapenv:Body>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="${NS}">
+  <soapenv:Body>
+    <tns:${operation}Response>${innerContent}</tns:${operation}Response>
+  </soapenv:Body>
 </soapenv:Envelope>`;
+}
+
+function userXml(u) {
+  return (
+    `<tns:item><tns:id>${u.id}</tns:id><tns:name>${u.name}</tns:name>`
+    + `<tns:email>${u.email}</tns:email><tns:country>${u.country}</tns:country>`
+    + `<tns:city>${u.city}</tns:city><tns:bio>${u.bio}</tns:bio>`
+    + `<tns:phone>${u.phone}</tns:phone><tns:avatar_url>${u.avatar_url}</tns:avatar_url></tns:item>`
+  );
+}
+
+function musicXml(m) {
+  return (
+    `<tns:item><tns:id>${m.id}</tns:id><tns:title>${m.title}</tns:title>`
+    + `<tns:artist>${m.artist}</tns:artist><tns:album>${m.album}</tns:album>`
+    + `<tns:duration>${m.duration}</tns:duration><tns:genre>${m.genre}</tns:genre>`
+    + `<tns:label>${m.label}</tns:label><tns:composer>${m.composer}</tns:composer>`
+    + `<tns:lyrics_snippet>${m.lyrics_snippet}</tns:lyrics_snippet>`
+    + `<tns:cover_url>${m.cover_url}</tns:cover_url></tns:item>`
+  );
+}
+
+function playlistXml(p) {
+  return (
+    `<tns:item><tns:id>${p.id}</tns:id><tns:user_id>${p.user_id}</tns:user_id>`
+    + `<tns:name>${p.name}</tns:name><tns:description>${p.description}</tns:description>`
+    + `<tns:genre_tags>${p.genre_tags}</tns:genre_tags><tns:mood>${p.mood}</tns:mood>`
+    + `<tns:cover_url>${p.cover_url}</tns:cover_url><tns:notes>${p.notes}</tns:notes></tns:item>`
+  );
 }
 
 function detectOperation(body, action) {
@@ -76,41 +109,28 @@ app.post('/', (req, res) => {
 
   if (operation === 'Seed') {
     runSeed();
-    return res.send(soapResponse('<SeedResponse><result>seeded</result></SeedResponse>'));
+    return res.send(soapResponse('Seed', '<tns:result>seeded</tns:result>'));
   }
 
   if (operation === 'GetUsers') {
     const users = db.prepare('SELECT * FROM users').all();
-    const items = users.map((u) => (
-      `<user><id>${u.id}</id><name>${u.name}</name><email>${u.email}</email>`
-      + `<country>${u.country}</country><city>${u.city}</city><bio>${u.bio}</bio>`
-      + `<phone>${u.phone}</phone><avatar_url>${u.avatar_url}</avatar_url></user>`
-    )).join('');
-    return res.send(soapResponse(`<GetUsersResponse>${items}</GetUsersResponse>`));
+    const items = users.map(userXml).join('');
+    return res.send(soapResponse('GetUsers', items));
   }
 
   if (operation === 'GetMusics') {
     const musics = db.prepare('SELECT * FROM musics').all();
-    const items = musics.map((m) => (
-      `<music><id>${m.id}</id><title>${m.title}</title><artist>${m.artist}</artist>`
-      + `<album>${m.album}</album><duration>${m.duration}</duration><genre>${m.genre}</genre>`
-      + `<label>${m.label}</label><composer>${m.composer}</composer>`
-      + `<lyrics_snippet>${m.lyrics_snippet}</lyrics_snippet><cover_url>${m.cover_url}</cover_url></music>`
-    )).join('');
-    return res.send(soapResponse(`<GetMusicsResponse>${items}</GetMusicsResponse>`));
+    const items = musics.map(musicXml).join('');
+    return res.send(soapResponse('GetMusics', items));
   }
 
   if (operation === 'GetPlaylists') {
     const playlists = db.prepare('SELECT * FROM playlists').all();
-    const items = playlists.map((p) => (
-      `<playlist><id>${p.id}</id><user_id>${p.user_id}</user_id><name>${p.name}</name>`
-      + `<description>${p.description}</description><genre_tags>${p.genre_tags}</genre_tags>`
-      + `<mood>${p.mood}</mood><cover_url>${p.cover_url}</cover_url><notes>${p.notes}</notes></playlist>`
-    )).join('');
-    return res.send(soapResponse(`<GetPlaylistsResponse>${items}</GetPlaylistsResponse>`));
+    const items = playlists.map(playlistXml).join('');
+    return res.send(soapResponse('GetPlaylists', items));
   }
 
-  res.status(400).send(soapResponse('<Fault><faultstring>Unknown operation</faultstring></Fault>'));
+  res.status(400).send(soapResponse('Fault', '<tns:faultstring>Unknown operation</tns:faultstring>'));
 });
 
 runSeed();
