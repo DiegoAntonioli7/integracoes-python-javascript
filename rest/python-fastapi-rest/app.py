@@ -9,25 +9,15 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from shared.seed_data import build_seed_data
 
-DATABASE_URL = "sqlite:///./rest_python.db"
+DATABASE_URL = f"sqlite:///{Path(__file__).parent / 'rest_python.db'}"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-
-app = FastAPI()
 
 
 class Base(DeclarativeBase):
     pass
 
 
-playlist_music = Table(
-    "playlist_music",
-    Base.metadata,
-    Column("playlist_id", String, ForeignKey("playlists.id")),
-    Column("music_id", String, ForeignKey("musics.id")),
-)
-
-
-class User(Base):
+class UserRow(Base):
     __tablename__ = "users"
     id = Column(String, primary_key=True)
     name = Column(String)
@@ -39,7 +29,7 @@ class User(Base):
     avatar_url = Column(String)
 
 
-class Music(Base):
+class MusicRow(Base):
     __tablename__ = "musics"
     id = Column(String, primary_key=True)
     title = Column(String)
@@ -53,7 +43,7 @@ class Music(Base):
     cover_url = Column(String)
 
 
-class Playlist(Base):
+class PlaylistRow(Base):
     __tablename__ = "playlists"
     id = Column(String, primary_key=True)
     user_id = Column(String, ForeignKey("users.id"))
@@ -65,48 +55,16 @@ class Playlist(Base):
     notes = Column(String)
 
 
+playlist_music = Table(
+    "playlist_music",
+    Base.metadata,
+    Column("playlist_id", String, ForeignKey("playlists.id")),
+    Column("music_id", String, ForeignKey("musics.id")),
+)
+
 Base.metadata.create_all(engine)
 
-
-def user_dict(u):
-    return {
-        "id": u.id,
-        "name": u.name,
-        "email": u.email,
-        "country": u.country,
-        "city": u.city,
-        "bio": u.bio,
-        "phone": u.phone,
-        "avatar_url": u.avatar_url,
-    }
-
-
-def music_dict(m):
-    return {
-        "id": m.id,
-        "title": m.title,
-        "artist": m.artist,
-        "album": m.album,
-        "duration": m.duration,
-        "genre": m.genre,
-        "label": m.label,
-        "composer": m.composer,
-        "lyrics_snippet": m.lyrics_snippet,
-        "cover_url": m.cover_url,
-    }
-
-
-def playlist_dict(p):
-    return {
-        "id": p.id,
-        "user_id": p.user_id,
-        "name": p.name,
-        "description": p.description,
-        "genre_tags": p.genre_tags,
-        "mood": p.mood,
-        "cover_url": p.cover_url,
-        "notes": p.notes,
-    }
+app = FastAPI()
 
 
 @app.post("/seed")
@@ -116,14 +74,16 @@ def seed():
     Base.metadata.create_all(engine)
     with Session(engine) as session:
         for u in data["users"]:
-            session.add(User(**u))
+            session.add(UserRow(**u))
         for m in data["musics"]:
-            session.add(Music(**m))
+            session.add(MusicRow(**m))
         for p in data["playlists"]:
-            session.add(Playlist(**p))
+            session.add(PlaylistRow(**p))
         session.commit()
         for pl_id, m_id in data["playlist_musics"]:
-            session.execute(playlist_music.insert().values(playlist_id=pl_id, music_id=m_id))
+            session.execute(
+                playlist_music.insert().values(playlist_id=pl_id, music_id=m_id)
+            )
         session.commit()
     return {"status": "seeded", "counts": {k: len(v) for k, v in data.items()}}
 
@@ -131,16 +91,44 @@ def seed():
 @app.get("/users")
 def get_users():
     with Session(engine) as session:
-        return [user_dict(u) for u in session.query(User).all()]
+        return [
+            {
+                "id": r.id, "name": r.name, "email": r.email,
+                "country": r.country, "city": r.city, "bio": r.bio,
+                "phone": r.phone, "avatar_url": r.avatar_url,
+            }
+            for r in session.query(UserRow).all()
+        ]
 
 
 @app.get("/musics")
 def get_musics():
     with Session(engine) as session:
-        return [music_dict(m) for m in session.query(Music).all()]
+        return [
+            {
+                "id": r.id, "title": r.title, "artist": r.artist,
+                "album": r.album, "duration": r.duration, "genre": r.genre,
+                "label": r.label, "composer": r.composer,
+                "lyrics_snippet": r.lyrics_snippet, "cover_url": r.cover_url,
+            }
+            for r in session.query(MusicRow).all()
+        ]
 
 
 @app.get("/playlists")
 def get_playlists():
     with Session(engine) as session:
-        return [playlist_dict(p) for p in session.query(Playlist).all()]
+        return [
+            {
+                "id": r.id, "user_id": r.user_id, "name": r.name,
+                "description": r.description, "genre_tags": r.genre_tags,
+                "mood": r.mood, "cover_url": r.cover_url, "notes": r.notes,
+            }
+            for r in session.query(PlaylistRow).all()
+        ]
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -30,8 +30,6 @@ function recreateSchema() {
   `);
 }
 
-recreateSchema();
-
 function soapResponse(bodyContent) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
@@ -114,5 +112,7 @@ app.post('/', (req, res) => {
 
   res.status(400).send(soapResponse('<Fault><faultstring>Unknown operation</faultstring></Fault>'));
 });
+
+runSeed();
 
 app.listen(3002, () => console.log('SOAP JS running on port 3002'));

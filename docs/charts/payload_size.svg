@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="480" viewBox="0 0 920 480">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="72.0" y="32.0" font-family="system-ui,sans-serif" font-size="16" font-weight="600" fill="#1f2937" text-anchor="start">Tamanho médio do payload (Aggregated)</text>
+<text x="72.0" y="466.0" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#6b7280" text-anchor="start">Kilobytes (KB)</text>
+<rect x="72" y="18" width="14" height="14" fill="#2563eb" rx="2"/>
+<text x="92.0" y="30.0" font-family="system-ui,sans-serif" font-size="12" font-weight="normal" fill="#1f2937" text-anchor="start">Python</text>
+<rect x="202" y="18" width="14" height="14" fill="#f59e0b" rx="2"/>
+<text x="222.0" y="30.0" font-family="system-ui,sans-serif" font-size="12" font-weight="normal" fill="#1f2937" text-anchor="start">JavaScript</text>
+<line x1="72" y1="392" x2="896" y2="392" stroke="#9ca3af" stroke-width="1"/>
+<line x1="72" y1="56.0" x2="896" y2="56.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="64.0" y="60.0" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">300.0</text>
+<line x1="72" y1="123.2" x2="896" y2="123.2" stroke="#e5e7eb" stroke-width="1"/>
+<text x="64.0" y="127.2" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">240.0</text>
+<line x1="72" y1="190.4" x2="896" y2="190.4" stroke="#e5e7eb" stroke-width="1"/>
+<text x="64.0" y="194.4" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">180.0</text>
+<line x1="72" y1="257.6" x2="896" y2="257.6" stroke="#e5e7eb" stroke-width="1"/>
+<text x="64.0" y="261.6" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">120.0</text>
+<line x1="72" y1="324.8" x2="896" y2="324.8" stroke="#e5e7eb" stroke-width="1"/>
+<text x="64.0" y="328.8" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">60.0</text>
+<line x1="72" y1="392.0" x2="896" y2="392.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="64.0" y="396.0" font-family="system-ui,sans-serif" font-size="11" font-weight="normal" fill="#1f2937" text-anchor="end">0.0</text>
+<rect x="121.4" y="248.1" width="76.9" height="143.9" fill="#2563eb" rx="3"/>
+<text x="159.9" y="262.1" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#fff" text-anchor="middle">128.5</text>
+<rect x="220.3" y="248.2" width="76.9" height="143.8" fill="#f59e0b" rx="3"/>
+<text x="258.8" y="262.2" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#fff" text-anchor="middle">128.4</text>
+<text x="209.3" y="420.0" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#1f2937" text-anchor="middle">REST</text>
+<rect x="396.1" y="185.6" width="76.9" height="206.4" fill="#2563eb" rx="3"/>
+<text x="434.6" y="199.6" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#fff" text-anchor="middle">184.3</text>
+<rect x="495.0" y="219.7" width="76.9" height="172.3" fill="#f59e0b" rx="3"/>
+<text x="533.4" y="233.7" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#fff" text-anchor="middle">153.8</text>
+<text x="484.0" y="420.0" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#1f2937" text-anchor="middle">SOAP</text>
+<rect x="670.8" y="238.7" width="76.9" height="153.3" fill="#2563eb" rx="3"/>
+<text x="709.2" y="252.7" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#fff" text-anchor="middle">136.9</text>
+<rect x="769.7" y="248.2" width="76.9" height="143.8" fill="#f59e0b" rx="3"/>
+<text x="808.1" y="262.2" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#fff" text-anchor="middle">128.4</text>
+<text x="758.7" y="420.0" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#1f2937" text-anchor="middle">GraphQL</text>
+</svg>

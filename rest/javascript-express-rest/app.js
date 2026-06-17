@@ -28,8 +28,6 @@ function recreateSchema() {
   `);
 }
 
-recreateSchema();
-
 function runSeed() {
   recreateSchema();
   const data = buildSeedData();
@@ -66,6 +64,8 @@ function runSeed() {
 app.post('/seed', (req, res) => {
   res.json(runSeed());
 });
+
+runSeed();
 
 app.get('/users', (req, res) => {
   res.json(db.prepare('SELECT * FROM users').all());
